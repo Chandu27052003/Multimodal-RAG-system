@@ -1,0 +1,175 @@
+version: "3.9"
+
+services:
+  # ── Ingestion Service ────────────────────────────────────────────
+  ingestion:
+    build: ./services/ingestion
+    container_name: rag-ingestion
+    ports:
+      - "${INGESTION_PORT:-8001}:8001"
+    env_file: .env
+    volumes:
+      - ./data/uploads:/app/data/uploads
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Preprocessing Service ────────────────────────────────────────
+  preprocessing:
+    build: ./services/preprocessing
+    container_name: rag-preprocessing
+    ports:
+      - "${PREPROCESSING_PORT:-8002}:8002"
+    env_file: .env
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Embedding Service ────────────────────────────────────────────
+  embedding:
+    build: ./services/embedding
+    container_name: rag-embedding
+    ports:
+      - "${EMBEDDING_PORT:-8003}:8003"
+    env_file: .env
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Vector Store Service ─────────────────────────────────────────
+  vector_store:
+    build: ./services/vector_store
+    container_name: rag-vector-store
+    ports:
+      - "${VECTOR_STORE_PORT:-8004}:8004"
+    env_file: .env
+    environment:
+      - VECTOR_DB_PATH=/app/data/vector_db
+    volumes:
+      - ./services/vector_store/data/vector_db:/app/data/vector_db
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Retrieval Service ────────────────────────────────────────────
+  retrieval:
+    build: ./services/retrieval
+    container_name: rag-retrieval
+    ports:
+      - "${RETRIEVAL_PORT:-8005}:8005"
+    env_file: .env
+    environment:
+      - EMBEDDING_SERVICE_URL=http://embedding:8003
+      - VECTOR_STORE_SERVICE_URL=http://vector_store:8004
+    depends_on:
+      embedding:
+        condition: service_healthy
+      vector_store:
+        condition: service_healthy
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Generation Service ───────────────────────────────────────────
+  generation:
+    build: ./services/generation
+    container_name: rag-generation
+    ports:
+      - "${GENERATION_PORT:-8006}:8006"
+    env_file: .env
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── API Gateway ──────────────────────────────────────────────────
+  gateway:
+    build: ./services/gateway
+    container_name: rag-gateway
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      - INGESTION_SERVICE_URL=http://ingestion:8001
+      - PREPROCESSING_SERVICE_URL=http://preprocessing:8002
+      - EMBEDDING_SERVICE_URL=http://embedding:8003
+      - VECTOR_STORE_SERVICE_URL=http://vector_store:8004
+      - RETRIEVAL_SERVICE_URL=http://retrieval:8005
+      - GENERATION_SERVICE_URL=http://generation:8006
+    depends_on:
+      ingestion:
+        condition: service_healthy
+      preprocessing:
+        condition: service_healthy
+      embedding:
+        condition: service_healthy
+      vector_store:
+        condition: service_healthy
+      retrieval:
+        condition: service_healthy
+      generation:
+        condition: service_healthy
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Streamlit UI ─────────────────────────────────────────────────
+  ui:
+    build: ./services/ui
+    container_name: rag-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - GATEWAY_URL=http://gateway:8000
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+# ── Network ──────────────────────────────────────────────────────
+networks:
+  rag_network:
+    driver: bridge

@@ -1,0 +1,76 @@
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual environments ─────────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Environment variables (contains secrets) ─────────────────────
+.env
+
+# ── Data / uploads (root and per-service) ────────────────────────
+data/uploads/*
+data/vector_db/*
+!data/uploads/.gitkeep
+!data/vector_db/.gitkeep
+
+**/data/uploads/*
+!**/data/uploads/.gitkeep
+**/data/vector_db/*
+!**/data/vector_db/.gitkeep
+
+# ── Binary / media files ─────────────────────────────────────────
+*.mp3
+*.mp4
+*.wav
+*.m4a
+*.ogg
+*.flac
+*.webm
+*.avi
+*.mov
+
+# ── Large document files (user uploads, not source code) ─────────
+# Uncomment below if you never want PDFs/DOCX tracked:
+# *.pdf
+# *.docx
+
+# ── Database files ───────────────────────────────────────────────
+*.sqlite3
+*.db
+
+# ── NLTK data ────────────────────────────────────────────────────
+nltk_data/
+
+# ── Logs ─────────────────────────────────────────────────────────
+logs/*
+!logs/.gitkeep
+*.log
+
+# ── IDE ──────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursor/
+
+# ── Docker ───────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Model cache / weights ────────────────────────────────────────
+models/
+*.bin
+*.pt
+*.onnx
+*.safetensors

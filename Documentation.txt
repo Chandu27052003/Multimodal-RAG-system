@@ -1,0 +1,184 @@
+1. System Overview
+The system is designed as a multimodal knowledge retrieval and summarization platform capable of processing heterogeneous information sources including text documents and audio recordings. The architecture integrates dense semantic retrieval, neural reranking, and large language model generation to produce context-grounded responses.
+The system enables:
+	•	ingestion of structured and unstructured data sources
+	•	semantic indexing of documents
+	•	automatic transcription of speech data
+	•	summarization of large text corpora
+	•	retrieval of relevant knowledge through vector similarity search
+	•	contextual answer generation grounded in retrieved content
+	•	time-aware information retrieval using metadata filtering
+	•	containerized deployment for reproducible execution environments
+The system architecture follows a modular pipeline consisting of ingestion, preprocessing, indexing, retrieval, reranking, generation, and deployment layers.
+
+2. Model Stack
+The following models are used in the system pipeline.
+Embedding Model llama-3.2-nemoretriever-300m-embed-v1
+Reranking Model rerank-qa-mistral-4b
+Generation Model qwen2-7b-instruct
+Speech-to-Text Model Speech transcription module integrated through a configurable automatic speech recognition interface. The architecture is designed to support interchangeable ASR models.
+Vector Database ChromaDB or FAISS for dense vector storage and similarity search.
+Backend Framework FastAPI for API management and service orchestration.
+Containerization Environment Docker for packaging and deployment.
+
+3. System Architecture
+The system architecture consists of the following processing layers:
+	1	Data ingestion layer
+	2	Preprocessing and normalization layer
+	3	Semantic chunking module
+	4	Embedding generation module
+	5	Vector storage layer
+	6	Query processing module
+	7	Retrieval engine
+	8	Neural reranking module
+	9	Context construction module
+	10	LLM response generation module
+	11	Temporal filtering subsystem
+	12	API management layer
+	13	User interface layer
+	14	Logging and monitoring module
+	15	Containerization and deployment environment
+Each module operates independently and communicates through structured data interfaces to ensure modularity and scalability.
+
+4. Data Ingestion Layer
+The data ingestion layer is responsible for collecting and standardizing input data from heterogeneous sources.
+Supported data modalities include:
+	•	portable document format files
+	•	word processing documents
+	•	plain text files
+	•	hypertext markup language documents
+	•	webpage content retrieved via URL
+	•	audio recordings
+	•	optional video files with extractable audio tracks
+The ingestion pipeline performs file type detection and routes each input source to the appropriate parser module.
+Document ingestion begins with file upload or URL submission through the system interface. The ingestion engine reads the file and extracts raw textual content using format-specific parsing methods. For webpages, the system retrieves HTML content via HTTP requests and extracts readable text while removing non-content elements.
+Audio ingestion involves receiving an audio recording, converting it into a standardized waveform format, and forwarding it to the speech transcription module. The transcription output becomes textual input for the downstream processing pipeline.
+All ingested data is assigned a unique identifier and associated with metadata including source type, file name, ingestion timestamp, and document location attributes.
+
+5. Preprocessing and Normalization
+The preprocessing layer transforms raw textual content into a standardized format suitable for indexing and retrieval.
+Text normalization operations include removal of non-content elements, elimination of formatting artifacts, and consolidation of textual structure. HTML tags, scripts, navigation elements, and styling components are removed during preprocessing.
+Whitespace normalization ensures consistent token separation. Special characters and unsupported encoding symbols are filtered to prevent tokenization inconsistencies.
+Document structure information such as page identifiers or section divisions may be preserved when available to support contextual retrieval and source attribution.
+The preprocessing layer outputs clean textual content together with structured metadata fields that describe the origin and properties of the data.
+
+6. Semantic Chunking
+Due to context window limitations of language models and embedding models, large documents must be divided into smaller semantic units.
+The chunking module segments preprocessed text into overlapping token blocks while preserving semantic coherence. The chunk size is configured to maintain compatibility with the embedding model while ensuring meaningful contextual grouping of sentences.
+Overlap between adjacent chunks is maintained to preserve cross-boundary context and prevent information loss.
+Each chunk is treated as an independent retrievable unit and inherits metadata attributes from its parent document. Additional metadata such as chunk index or sequence position may be assigned to maintain document ordering.
+The output of this stage is a collection of semantically meaningful text segments ready for embedding generation.
+
+7. Metadata Management
+Metadata management is a critical component of the indexing system. Each document chunk is associated with metadata attributes describing its origin and contextual properties.
+Typical metadata fields include:
+	•	unique document identifier
+	•	source type classification
+	•	original file name or URL
+	•	ingestion timestamp
+	•	creation date when available
+	•	document section or page location
+	•	audio timestamp for transcribed segments
+Metadata enables advanced retrieval operations such as temporal filtering, source attribution, and modality-based search constraints.
+All metadata is stored alongside the vector representation within the vector database.
+
+8. Embedding Generation
+The embedding generation module converts textual chunks into dense vector representations using the selected embedding model.
+The embedding model utilized in the system is:
+llama-3.2-nemoretriever-300m-embed-v1
+This model generates high-dimensional semantic vectors that encode contextual meaning of the text. The embedding generation process involves tokenization of input text followed by transformation into vector space through the model’s neural encoder.
+The resulting embeddings capture semantic relationships between documents, allowing similar concepts to occupy nearby positions within the vector space.
+Each embedding vector is associated with the corresponding text chunk and metadata before being stored in the vector database.
+
+9. Vector Database Storage
+The vector storage layer is responsible for maintaining a searchable index of document embeddings.
+The system uses a specialized vector database capable of performing efficient nearest-neighbor search across high-dimensional embedding spaces.
+Each stored record contains:
+	•	embedding vector
+	•	text chunk content
+	•	associated metadata
+	•	document identifier
+The vector database supports similarity search operations using distance metrics such as cosine similarity or Euclidean distance. It also supports metadata-based filtering which enables retrieval constraints based on attributes such as date or source type.
+Vector indexing structures optimize retrieval speed even for large document collections.
+
+10. Query Processing
+User queries are received through the API interface and processed through the query processing module.
+The query text undergoes normalization and tokenization consistent with the preprocessing rules applied during document indexing.
+The normalized query is converted into a semantic vector representation using the same embedding model used for document indexing.
+This ensures compatibility between query embeddings and document embeddings within the vector space.
+The resulting query embedding is used to perform a similarity search against the vector database.
+
+11. Retrieval Engine
+The retrieval engine performs dense vector search to identify document chunks whose embeddings are closest to the query embedding.
+The search operation returns a set of candidate document chunks ranked by similarity score. The retrieval stage typically returns a larger candidate pool to ensure recall before refinement by the reranking module.
+The retrieved results contain the original text chunks and their metadata attributes.
+
+12. Neural Reranking
+The reranking module improves the relevance of retrieved documents by re-evaluating candidate results using a cross-encoder architecture.
+The model used for reranking is:
+rerank-qa-mistral-4b
+The reranking process receives the user query and candidate document chunks as input and computes a relevance score for each pair. The model evaluates contextual compatibility between the query and the document content.
+Candidate documents are then sorted according to their relevance scores. Only the highest scoring document segments are retained for context construction.
+Reranking significantly improves retrieval precision by removing semantically weak matches that may appear during vector similarity search.
+
+13. Context Construction
+The context construction module aggregates the top-ranked document chunks into a unified context block.
+The selected chunks are concatenated in an order that preserves semantic flow while respecting the context length limitations of the generation model.
+Metadata associated with each chunk is preserved to enable traceability and source attribution during response generation.
+The resulting context serves as grounded knowledge input for the language model.
+
+14. Response Generation
+The generation module produces natural language responses using a large language model conditioned on the retrieved context.
+The model used for generation is:
+qwen2-7b-instruct
+The model receives a structured prompt containing system instructions, the aggregated context block, and the user query.
+The generation process synthesizes information from the provided context to produce an answer or summary. Because the model is constrained by retrieved content, the system reduces the risk of hallucinated responses and improves factual grounding.
+The output includes a natural language response and may include references to source metadata where applicable.
+
+15. Document Summarization Workflow
+When summarization is requested, the document undergoes the same ingestion and chunking pipeline used for indexing.
+Individual chunks are processed by the generation model to produce intermediate summaries. These summaries are aggregated and passed through an additional summarization stage to produce a consolidated final summary representing the entire document.
+This hierarchical summarization process ensures scalability for long documents while maintaining coherence.
+
+16. Temporal Query Processing
+Temporal querying allows retrieval of information based on time-related metadata.
+The query processing system detects temporal expressions within the user query and converts them into structured date ranges.
+The retrieval engine applies metadata filters to restrict search results to documents whose timestamps fall within the specified temporal range.
+Temporal filtering is implemented directly within the vector database query interface to ensure efficient retrieval.
+
+17. API Layer
+The system backend is implemented using the FastAPI framework.
+The API layer provides endpoints for:
+	•	document ingestion
+	•	audio ingestion
+	•	webpage indexing
+	•	knowledge base querying
+	•	document summarization
+The API layer orchestrates the execution of the internal pipeline modules and returns structured responses to client applications.
+FastAPI automatically generates interactive API documentation for testing and integration.
+
+18. User Interface Layer
+A client interface may be implemented to enable interaction with the system. The interface provides functionality for uploading data sources, submitting queries, and displaying generated responses.
+The interface communicates with the backend API using HTTP requests.
+
+19. Logging and Monitoring
+The logging subsystem records operational events across all system modules.
+Logged events include ingestion operations, retrieval queries, model inference calls, system errors, and performance metrics.
+Monitoring ensures system reliability and supports debugging and performance optimization.
+
+20. Containerization and Deployment
+The entire system is packaged within a Docker container to ensure consistent runtime environments across development and deployment platforms.
+The Docker container includes:
+	•	Python runtime environment
+	•	required dependencies
+	•	model access configuration
+	•	application source code
+The Dockerfile defines the build instructions for constructing the container image.
+The container exposes the API service on a designated network port, allowing external clients to access system functionality.
+Containerization simplifies deployment on local machines, servers, or cloud environments while maintaining reproducibility.
+
+21. End-to-End Workflow Summary
+The final system workflow follows these stages:
+Data ingestion collects heterogeneous input sources and converts them into textual form. Preprocessing cleans and normalizes the extracted text. The chunking module divides documents into semantically meaningful segments. The embedding model transforms each segment into a vector representation which is stored in a vector database alongside metadata.
+User queries are embedded using the same embedding model and used to perform similarity search in the vector database. Retrieved candidates are refined by the neural reranking model. The highest scoring documents are aggregated into a context block which is passed to the generation model. The generation model produces context-grounded responses or summaries which are returned to the user through the API interface.
+The entire system operates within a containerized environment to ensure reliable deployment and reproducibility.
