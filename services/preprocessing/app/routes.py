@@ -20,16 +20,20 @@ router = APIRouter(prefix="/preprocess", tags=["Preprocessing"])
 @router.post("/", response_model=PreprocessResponse)
 async def preprocess_document(
     request: PreprocessRequest,
-    chunk_size: int = Query(default=None, description="Override default chunk size (words)"),
-    chunk_overlap: int = Query(default=None, description="Override default chunk overlap (words)"),
+    chunk_size: int | None = Query(
+        default=None, gt=0, description="Override default chunk size (words)"
+    ),
+    chunk_overlap: int | None = Query(
+        default=None, ge=0, description="Override default chunk overlap (words)"
+    ),
 ):
     """
     Full preprocessing pipeline: normalize text → semantic chunking → metadata assignment.
 
     Stateless — receives raw text, returns cleaned chunks with metadata.
     """
-    size = chunk_size or settings.CHUNK_SIZE
-    overlap = chunk_overlap or settings.CHUNK_OVERLAP
+    size = settings.CHUNK_SIZE if chunk_size is None else chunk_size
+    overlap = settings.CHUNK_OVERLAP if chunk_overlap is None else chunk_overlap
 
     original_len = len(request.text_content)
 
