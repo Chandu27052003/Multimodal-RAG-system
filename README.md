@@ -10,6 +10,11 @@ The system is engineered with a microservice architecture, employing Docker for 
 
 ## Features
 
+* **Experimental, offline OKF preparation**: An optional
+  [Open Knowledge Format adapter](docs/okf-evaluation.md) reads local concept
+  bundles and prepares metadata-preserving preprocessing requests. This first
+  increment does not change the running RAG pipeline or claim retrieval gains.
+
 *   **API-First Design**:
     *   Exposes all core system functionalities via a **FastAPI backend API**.
     *   Provides dedicated endpoints for:

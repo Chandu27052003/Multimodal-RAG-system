@@ -1,0 +1,4 @@
+# Offline preparation adapter only. No model credentials or services required.
+PyYAML==6.0.3
+# Existing preprocessing schema compatibility test.
+pydantic>=2.12.0,<3
